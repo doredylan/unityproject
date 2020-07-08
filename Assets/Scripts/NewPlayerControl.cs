@@ -11,6 +11,7 @@ public class NewPlayerControl : MonoBehaviour
 
     //move input variable
     private float moveInput;
+    public bool isCrouching;
 
     //what we are moving
     private Rigidbody2D rb;
@@ -19,7 +20,7 @@ public class NewPlayerControl : MonoBehaviour
     private bool facingRight = true;
 
     //Variables for jump/doublejump conditions
-    private bool isGrounded;
+    public bool isGrounded;
     public Transform groundCheck;
     public float checkRadius;
     public LayerMask whatIsGround;
@@ -69,18 +70,25 @@ public class NewPlayerControl : MonoBehaviour
         
         if (isHurt != true)
         {
-            Movement();
+            
+            
+                Movement();
+            
         }
     }
 
     private void Update()//This runs once per frame
     {
-       // OnDrawGizmosSelected();
+
         if (isHurt != true)
         {
-            DoubleJumpAndWallSlide();
+            
+                DoubleJumpAndWallSlide();
+           
+                Crouch();
+           
+            
         }
-
     }
    
  private void Movement()
@@ -101,9 +109,23 @@ public class NewPlayerControl : MonoBehaviour
             Flip();
         }
     }
+    private void Crouch()
+    {
+        if(Input.GetAxisRaw("Vertical") < -.5 && isGrounded == true)
+        {
+            //need to manipulate hurt box here as well
+            anim.SetBool("isCrouching", true);
+            isCrouching = true;
+        }
+        else
+        {
+            anim.SetBool("isCrouching", false);
+            isCrouching = false;
+        }
+    }
     private void DoubleJumpAndWallSlide()
     {
-        if(rb.velocity.y < .1f && wallSliding == false)
+        if(rb.velocity.y < .5f )//&& wallSliding == false) WallJUMP OFF
         {
             anim.SetBool("isJumping", false);
             anim.SetBool("isFalling", true);
@@ -115,20 +137,20 @@ public class NewPlayerControl : MonoBehaviour
             anim.SetBool("isFalling", false);
             extraJumps = 1;
         }
-        if (Input.GetKeyDown(KeyCode.Space) && extraJumps > 0)
+        if (Input.GetButtonDown("Jump") && extraJumps > 0)
         {
             rb.velocity = Vector2.up * jumpForce;
             extraJumps--;
             anim.SetBool("isJumping", true); //I think this is where the double jump animation bool belongs
         }
-        else if (Input.GetKeyDown(KeyCode.Space) && extraJumps == 0 && isGrounded == true)
+        else if (Input.GetButtonDown("Jump") && extraJumps == 0 && isGrounded == true)
         {
             rb.velocity = Vector2.up * jumpForce;
             anim.SetBool("isJumping", true);
         }
 
-        isTouchingFront = Physics2D.OverlapCircle(frontCheck.position, checkFRadius, whatIsGround);
-        if (isTouchingFront == true && isGrounded == false)
+       // isTouchingFront = Physics2D.OverlapCircle(frontCheck.position, checkFRadius, whatIsGround); WALLJUMP OFF
+        /*if (isTouchingFront == true && isGrounded == false)
         {
             extraJumps = 0; //enabling this will give a double jump afte rwallcling
             wallSliding = true;
@@ -136,8 +158,8 @@ public class NewPlayerControl : MonoBehaviour
             anim.SetBool("isWallsliding", true);
             anim.SetBool("isFalling", false);
             anim.SetBool("isJumping", false);
-        }
-        else
+        }*/
+      /*  else
         {
             wallSliding = false;
            
@@ -147,11 +169,12 @@ public class NewPlayerControl : MonoBehaviour
         {
             anim.SetBool("isWallsliding", true);
             rb.velocity = new Vector2(rb.velocity.x, Mathf.Clamp(rb.velocity.y, -wallSlidingSpeed, float.MaxValue));
-        }
-        if (Input.GetKeyDown(KeyCode.Space) && wallSliding == true)
+        }*/
+        if (Input.GetButtonDown("Jump") && isTouchingFront == true)
         {
            
             wallJumping = true;
+            extraJumps = 0;
             Invoke("SetWallJumpingToFalse", wallJumpTime);
             //WallJumping animation goes here
         }
@@ -175,7 +198,7 @@ public class NewPlayerControl : MonoBehaviour
     {
 
         Gizmos.DrawWireSphere(groundCheck.position, checkRadius);
-        Gizmos.DrawWireSphere(frontCheck.position, checkFRadius);
+/*        Gizmos.DrawWireSphere(frontCheck.position, checkFRadius);*/
     }
 
 
@@ -212,7 +235,7 @@ public class NewPlayerControl : MonoBehaviour
         {
             NPC npc = other.gameObject.GetComponent<NPC>();
             isHurt = true;
-            Invoke("SetBoolBack", 1f);
+            Invoke("SetHurtBoolBack", 1f);
             anim.SetTrigger("hurt");
             if (other.gameObject.transform.position.x > transform.position.x)
             {
@@ -227,7 +250,7 @@ public class NewPlayerControl : MonoBehaviour
         }
 
     }
-    private void SetBoolBack()
+    private void SetHurtBoolBack()
     {
         isHurt = false;
     }
@@ -305,3 +328,6 @@ public class NewPlayerControl : MonoBehaviour
 //        state = State.idle;
 //    }
 //}
+
+
+//to fix walljump you need isTouching front & is pressing direction of istouchinfrount

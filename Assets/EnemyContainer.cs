@@ -59,16 +59,16 @@ public class EnemyContainer : MonoBehaviour
     
     public void TakeDamage(int damage)
     {
+        GetComponent<LocalEnemy>().rb.velocity = Vector2.zero;
         GetComponent<LocalEnemy>().currentHP -= damage;
-        //GetComponent<LocalEnemy>().anim.SetTrigger("hurt");//use `anim.SetBool("hurt", true)` and maybe an invoke timer locally to change boolean back
+        GetComponent<LocalEnemy>().isHurt = true;
+        Invoke("SetHurtBoolBack", 1.5f);
+        //Need to add Animation >>>GetComponent<LocalEnemy>().anim.SetTrigger("hurt");//use `anim.SetBool("hurt", true)` and maybe an invoke timer locally to change boolean back
 
         //Play hurt animation
         if (GetComponent<LocalEnemy>().currentHP <= 0)
         {
             GetComponent<LocalEnemy>().anim.SetTrigger("death");
-            
-            
-            
         }
 
     }
@@ -89,7 +89,7 @@ public class EnemyContainer : MonoBehaviour
         }
         else if (dist < 5 && GetComponent<LocalEnemy>().attack == true)
         {
-            Invoke("SetBoolBack", 10f);
+            Invoke("SetAttackBoolBack", 10f);
             GetComponent<LocalEnemy>().anim.SetBool("attack", false);
         }
         else
@@ -99,8 +99,12 @@ public class EnemyContainer : MonoBehaviour
         } 
     }
 
-    private void SetBoolBack()
+    private void SetAttackBoolBack()
     {
         GetComponent<LocalEnemy>().attack = false;
+    }
+    private void SetHurtBoolBack()
+    {
+        GetComponent<LocalEnemy>().isHurt = false;
     }
 }
