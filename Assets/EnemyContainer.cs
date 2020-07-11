@@ -62,12 +62,13 @@ public class EnemyContainer : MonoBehaviour
         GetComponent<LocalEnemy>().rb.velocity = Vector2.zero;
         GetComponent<LocalEnemy>().currentHP -= damage;
         GetComponent<LocalEnemy>().isHurt = true;
-        Invoke("SetHurtBoolBack", 1.5f);
+        Invoke("SetHurtBoolBack", .75f);
         //Need to add Animation >>>GetComponent<LocalEnemy>().anim.SetTrigger("hurt");//use `anim.SetBool("hurt", true)` and maybe an invoke timer locally to change boolean back
 
         //Play hurt animation
         if (GetComponent<LocalEnemy>().currentHP <= 0)
         {
+            gameObject.layer = LayerMask.NameToLayer("Default");
             GetComponent<LocalEnemy>().anim.SetTrigger("death");
         }
 
@@ -83,15 +84,15 @@ public class EnemyContainer : MonoBehaviour
         //this controls the Attackswitch in NPC speed once player is in range(dist) of enemy
         if (dist < 5)
         {
-            jumpLenght = jumpLenght+=5f;
+            jumpLenght = jumpLenght+=10f;
             GetComponent<LocalEnemy>().attack=true;
             GetComponent<LocalEnemy>().anim.SetBool("attack", true);
         }
-        else if (dist < 5 && GetComponent<LocalEnemy>().attack == true)
+        /*else if (dist < 5 && GetComponent<LocalEnemy>().attack == true)
         {
             Invoke("SetAttackBoolBack", 10f);
             GetComponent<LocalEnemy>().anim.SetBool("attack", false);
-        }
+        }*/
         else
         {
             GetComponent<LocalEnemy>().attack = false;
@@ -106,5 +107,52 @@ public class EnemyContainer : MonoBehaviour
     private void SetHurtBoolBack()
     {
         GetComponent<LocalEnemy>().isHurt = false;
+    }
+
+    public void AirMovement(float leftCap, float rightCap, float jumpLenght, float jumpHeight, bool facingLeft, Rigidbody2D rb, Collider2D coll)
+    {
+
+        {
+            if (GetComponent<LocalEnemy>().facingLeft == true)
+            {
+                //Test to see if we beyond the leftcap
+                if (transform.position.x > leftCap)
+                {
+                    //make sure sprite faces right location
+
+                   
+                   
+                        //jump
+                        rb.velocity = new Vector2(-jumpLenght, jumpHeight);
+                        transform.localScale = new Vector2(1, 1);
+                    
+                }
+                else
+                {
+                    GetComponent<LocalEnemy>().facingLeft = false;
+                }
+            }
+
+            else
+            {
+
+                //Test to see if we beyond the rightCap
+                if (transform.position.x < rightCap)
+                {
+
+                    
+                        //jump
+                        rb.velocity = new Vector2(jumpLenght, jumpHeight);
+                        transform.localScale = new Vector2(-1, 1);
+                    
+
+                }
+                else
+                {
+                    GetComponent<LocalEnemy>().facingLeft = true;
+                }
+
+            }
+        }
     }
 }

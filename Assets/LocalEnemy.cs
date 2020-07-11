@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using JetBrains.Annotations;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -15,6 +16,8 @@ public class LocalEnemy : EnemyContainer
     //boundaries for npc movement
     [SerializeField] public float leftCap;
     [SerializeField] public float rightCap;
+    [SerializeField] public int leftCapMultiplier;
+    [SerializeField] public int rightCapMultiplier;
 
     //distance vars for npc movment
     [SerializeField] public float jumpLenght = 3f;
@@ -32,7 +35,13 @@ public class LocalEnemy : EnemyContainer
 
     //Enemy Stats
     [SerializeField] private int maxHP;
+    [SerializeField] public int damage;
     public int currentHP;
+
+    //projectile vars
+    public Transform firePoint;
+    public GameObject fireballPrefab;
+    public bool isCreated;
 
     //Enemy Type Toggles
     [SerializeField] private bool canFly;
@@ -48,8 +57,8 @@ public class LocalEnemy : EnemyContainer
         rb = GetComponent<Rigidbody2D>();
         coll = GetComponent<Collider2D>();
         currentHP = maxHP;
-        leftCap = rb.position.x - 5;
-        rightCap = rb.position.x + 5;
+        leftCap = rb.position.x - leftCapMultiplier;
+        rightCap = rb.position.x + rightCapMultiplier;
     }
 
     // Update is called once per frame
@@ -59,9 +68,53 @@ public class LocalEnemy : EnemyContainer
         dist = Vector2.Distance(player.position, rb.position);
         if (!isHurt)
         {
-            Movement(leftCap, rightCap, jumpLenght, jumpHeight, facingLeft, rb, ground, coll);
-            PlayerDistanceAttackTrigger(dist, player, rb, jumpLenght);
+            if (hasProjectile)
+            {
+                Movement(leftCap, rightCap, jumpLenght, jumpHeight, facingLeft, rb, ground, coll);
+                
+                if (dist < 7)
+                {
+                    Shoot();
+                }
+                
+            }
+            if (canFly)
+            {
+                AirMovement(leftCap, rightCap, jumpLenght, jumpHeight, facingLeft, rb, coll);
+                //cool flying logic inbound A* pathfinding
+            }
+            else
+            {
+                Movement(leftCap, rightCap, jumpLenght, jumpHeight, facingLeft, rb, ground, coll);
+                PlayerDistanceAttackTrigger(dist, player, rb, jumpLenght);
+            }
+        }
+        
+    }
+
+    public void Shoot()
+    {
+        if (!isCreated)
+        {
+            anim.SetBool("attack", true);
+            attack = true;
+           
+            Invoke("SetIsCreatedBoolBack", 5f);
+            if (anim.GetBool("attack") == true)
+            {
+                Invoke("CreateFireball", 1f);
+                isCreated = true;
+            }
         }
     }
-    
+    private void SetIsCreatedBoolBack()
+    {
+        isCreated = false;
+        anim.SetBool("attack", false);
+        attack = false;
+    }
+    public void CreateFireball()
+    {
+        Instantiate(fireballPrefab, firePoint.position, firePoint.rotation);
+    }
 }

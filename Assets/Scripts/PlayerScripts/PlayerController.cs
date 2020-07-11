@@ -7,13 +7,13 @@ public class PlayerController : MonoBehaviour
     //Movement variables
     [SerializeField] private float speed;
     [SerializeField] private float jumpForce;
+    public ParticleSystem dust;
 
     //move input variable
     private float moveInput;
 
     //what we are moving
     private Rigidbody2D rb;
-
 
     //Sprite default facing direction
     private bool facingRight = true;
@@ -38,9 +38,13 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float hurtForce;
     [SerializeField] private bool isHurt = false;
     public Transform attackPoint;
-    
+    public Collider2D[] hitEnemies;
     public LayerMask enemyLayers;
     public int attackDamage = 100;
+
+    //Player Stats
+    public int maxHp = 300;
+    public int currentHp;
 
     // Start is called before the first frame update
     void Start()
@@ -49,12 +53,13 @@ public class PlayerController : MonoBehaviour
         anim = GetComponent<Animator>();
         coll = GetComponent<CapsuleCollider2D>();
         gameObject.GetComponentInChildren<CircleCollider2D>().enabled = false;
+        currentHp = maxHp;
     }
     
     private void FixedUpdate()
     {
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, checkRadius, whatIsGround);
-       
+        hitEnemies = Physics2D.OverlapCircleAll(attackPoint.position, 1.75f, enemyLayers);
     }
 
     // Update is called once per frame
@@ -98,6 +103,10 @@ public class PlayerController : MonoBehaviour
     {
         facingRight = !facingRight;
         transform.Rotate(0f, 180f, 0f);
+        if (isGrounded == true)
+        {
+            CreateDust();
+        }
     }
 
     private void DoubleJump()
@@ -114,6 +123,7 @@ public class PlayerController : MonoBehaviour
         }
         if (Input.GetButtonDown("Jump") && extraJumps > 0)
         {
+            CreateDust();
             rb.velocity = Vector2.up * jumpForce;
             extraJumps--;
             anim.SetBool("isJumping", true); //I think this is where the double jump animation bool belongs
@@ -122,6 +132,7 @@ public class PlayerController : MonoBehaviour
         {
             rb.velocity = Vector2.up * jumpForce;
             anim.SetBool("isJumping", true);
+            
         }
     }
     private void Crouch()
@@ -143,6 +154,7 @@ public class PlayerController : MonoBehaviour
         {
             if (Input.GetButtonDown("Fire3"))
             {
+                rb.velocity/=3;
                 //enabling hitbox
                 gameObject.GetComponentInChildren<CircleCollider2D>().enabled = true;
                 //bool for animation/movement disablement based on attack
@@ -151,10 +163,10 @@ public class PlayerController : MonoBehaviour
                 anim.SetTrigger("attack");
                 anim.SetBool("isJumping", false);
                 anim.SetBool("isFalling", false);
-                Invoke("SetAttackBoolBack", .75f);
+                Invoke("SetAttackBoolBack", .35f);
 
                 //hit detection
-                Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(attackPoint.position, 1f , enemyLayers);
+                //Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(attackPoint.position, 1f, enemyLayers); //moved to fixedupdate() to help with hit detection
                 //damage
                 foreach (Collider2D enemy in hitEnemies)
                 {
@@ -166,6 +178,7 @@ public class PlayerController : MonoBehaviour
             }
             if (Input.GetButtonDown("Fire2"))
             {
+                rb.velocity /= 3;
                 //enabling hitbox
                 gameObject.GetComponentInChildren<CircleCollider2D>().enabled = true;
                 //bool for animation/movement disablement based on attack
@@ -174,11 +187,9 @@ public class PlayerController : MonoBehaviour
                 anim.SetTrigger("attack2");
                 anim.SetBool("isJumping", false);
                 anim.SetBool("isFalling", false);
-                Invoke("SetAttackBoolBack", .75f);
+                Invoke("SetAttackBoolBack", .35f);
                 
-                //hit detection
-                Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(attackPoint.position, 1.25f, enemyLayers);
-                //damage
+                //damage && hit detection
                 foreach (Collider2D enemy in hitEnemies)
                 {
                     Debug.Log("WE HIT " + enemy.name);
@@ -191,6 +202,7 @@ public class PlayerController : MonoBehaviour
             {
                 if (Input.GetButtonDown("Fire1"))
                 {
+                    rb.velocity /= 3;
                     //enabling hitbox
                     gameObject.GetComponentInChildren<CircleCollider2D>().enabled = true;
                     //bool for animation/movement disablement based on attack
@@ -200,11 +212,10 @@ public class PlayerController : MonoBehaviour
                     anim.SetBool("isCrouching", false);
                     anim.SetBool("isJumping", false);
                     anim.SetBool("isFalling", false);
-                    Invoke("SetAttackBoolBack", .75f);
-                   
-                    //hit detection
-                    Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(attackPoint.position, 1f, enemyLayers);
-                    //damage
+                    Invoke("SetAttackBoolBack", .35f);
+
+
+                    //damage &&  //hit detection
                     foreach (Collider2D enemy in hitEnemies)
                     {
                         Debug.Log("WE HIT " + enemy.name);
@@ -225,18 +236,20 @@ public class PlayerController : MonoBehaviour
         //print("unlocked");
     }
 
-    void OnDrawGizmosSelected()//visual scene reference for circumfrence of ground detection
+    /*void OnDrawGizmosSelected()//visual scene reference for circumfrence of ground detection
     {
 
         Gizmos.DrawWireSphere(groundCheck.position, checkRadius);
    
-    }
+    }*/
 
     private void OnCollisionEnter2D(Collision2D other)///Need to look at this section of the code to fix the animation for the hurt box when not facing enemy.
     {
         if (other.gameObject.tag == "Enemy")
         {
             LocalEnemy enemy = other.gameObject.GetComponent<LocalEnemy>();
+
+            takeDamage(enemy.damage);
             isHurt = true;
             Invoke("SetHurtBoolBack", .75f);
             anim.SetTrigger("hurt");
@@ -261,4 +274,29 @@ public class PlayerController : MonoBehaviour
         isHurt = false;
     }
 
+    public void takeDamage(int damage)
+    {
+        currentHp -= damage;
+        isHurt = true;
+        anim.SetTrigger("hurt");
+        anim.SetBool("isCrouching", false);
+        anim.SetBool("isJumping", false);
+        anim.SetBool("isFalling", false);
+        //print("I SHOULD BE TAKING DAMAGE");
+        if (currentHp <= 0)
+        {
+            //gameover bro!
+        }
+        /*//Invoke("SetHurtBoolBack", .75f);*/
+    }
+   /* public void FasterHitBoxDetection()
+    {
+        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(attackPoint.position, 1f, enemyLayers);
+    }*/
+
+
+    void CreateDust()
+    {
+        dust.Play();
+    }
 }
