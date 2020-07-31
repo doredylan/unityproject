@@ -25,10 +25,10 @@ public class knife : MonoBehaviour
             enemy.TakeDamage(damage);
             Instantiate(impactEffect, transform.position, transform.rotation);
         }
-        
-       
- 
-        
+
+        Debug.Log("The Knife hit " + hitInfo);
+
+
         Destroy(gameObject);
         
     }
