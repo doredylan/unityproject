@@ -70,7 +70,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 727804708}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.71, y: 0.37, z: 0}
+  m_LocalPosition: {x: 0.99, y: 0.15, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 2604918175338909212}
@@ -121,6 +121,7 @@ GameObject:
   - component: {fileID: 1123924774}
   - component: {fileID: 6531000149080366866}
   - component: {fileID: 5005245141735456222}
+  - component: {fileID: 1804127851}
   m_Layer: 10
   m_Name: NewPlayer
   m_TagString: Untagged
@@ -265,8 +266,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c5e5893ee97901644a60f26baedd49fc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fallMultiplier: 1.13
-  fastFallMultiplier: 1.58
+  fallMultiplier: 1.25
+  fastFallMultiplier: 5
 --- !u!114 &5005245141735456222
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -291,7 +292,7 @@ MonoBehaviour:
   extraJumps: 1
   isAttacking: 0
   attackRate: 4
-  hurtForce: 12
+  hurtForce: 5
   isHurt: 0
   attackPoint: {fileID: 2015783554649215694}
   hitEnemies: []
@@ -299,8 +300,41 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 512
   attackDamage: 100
+  itemName: 
   maxHp: 300
   currentHp: 0
+--- !u!114 &1804127851
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2604918175338909208}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d24d46b643795694c825fdb3c81ea53c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  input1: 0
+  input2: 0
+  input3: 0
+  firePoint: {fileID: 727804709}
+  tomes: 0
+  recentTome: 
+  timer: 0
+  flamePrefab: {fileID: 367630395358959540, guid: 889a8b1ff98da5d4880980fcba2cba53,
+    type: 3}
+  ligtheningPrefab: {fileID: 1668825332783652861, guid: 53816d539a07c514bac3588d5959630c,
+    type: 3}
+  chainPrefab: {fileID: 2131119382215114865, guid: 7fa0fa20219b2d74899afc6e21eaeabb,
+    type: 3}
+  inputOrder1: 0
+  inputOrder2: 0
+  maxHp: 0
+  currentHp: 0
+  maxMp: 500
+  currentMp: 0
+  tomeMpCost: 0
 --- !u!1 &8355491670619185287
 GameObject:
   m_ObjectHideFlags: 0

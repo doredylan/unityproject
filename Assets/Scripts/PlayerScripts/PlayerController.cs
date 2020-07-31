@@ -8,6 +8,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float speed;
     [SerializeField] private float jumpForce;
     public ParticleSystem dust;
+    [SerializeField] private float runSpeed;
 
     //move input variable
     private float moveInput;
@@ -28,6 +29,7 @@ public class PlayerController : MonoBehaviour
     //Animation
     private Animator anim;
     public bool isAttacking;
+    [SerializeField] public bool isMeditation = false;
 
     //Lag after attack 1 before next attack can ocurr
     public float attackRate = 9f;
@@ -41,11 +43,14 @@ public class PlayerController : MonoBehaviour
     public Collider2D[] hitEnemies;
     public LayerMask enemyLayers;
     public int attackDamage = 100;
+    public string itemName;
+    public SpellController spellController;
 
     //Player Stats
     public int maxHp = 300;
-    public int currentHp;
-
+    [SerializeField] public int currentHp;
+    public float maxMp;
+    public float currentMp;
     // Start is called before the first frame update
     void Start()
     {
@@ -55,7 +60,7 @@ public class PlayerController : MonoBehaviour
         gameObject.GetComponentInChildren<CircleCollider2D>().enabled = false;
         currentHp = maxHp;
     }
-    
+
     private void FixedUpdate()
     {
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, checkRadius, whatIsGround);
@@ -67,16 +72,35 @@ public class PlayerController : MonoBehaviour
     {
         if (isHurt != true)
         {
-            Attack();
-            if (!isAttacking == true)
+            if (Input.GetButton("Submit"))
             {
-                Movement();
-                DoubleJump();
-                Crouch();
+                rb.velocity /= 1000;
+                Meditation();
+                isMeditation = true;
+                StartCoroutine(RebuildMp());
+                
+            }
+            if (!Input.GetButton("Submit"))
+            {
+                isMeditation = false;
+                anim.SetBool("meditation", false);
+            }
+
+            if (isMeditation != true)
+            {
+                Attack();
+                if (!isAttacking == true)
+                {
+                    Movement();
+                    DoubleJump();
+                    Crouch();
+                    Running();
+                }
             }
         }
+        maxMp = GetComponent<Combo>().maxMp;
+        currentMp = GetComponent<Combo>().currentMp;
 
-        
     }
 
 
@@ -132,7 +156,7 @@ public class PlayerController : MonoBehaviour
         {
             rb.velocity = Vector2.up * jumpForce;
             anim.SetBool("isJumping", true);
-            
+
         }
     }
     private void Crouch()
@@ -154,7 +178,7 @@ public class PlayerController : MonoBehaviour
         {
             if (Input.GetButtonDown("Fire3"))
             {
-                rb.velocity/=3;
+                rb.velocity /= 3;
                 //enabling hitbox
                 gameObject.GetComponentInChildren<CircleCollider2D>().enabled = true;
                 //bool for animation/movement disablement based on attack
@@ -163,6 +187,7 @@ public class PlayerController : MonoBehaviour
                 anim.SetTrigger("attack");
                 anim.SetBool("isJumping", false);
                 anim.SetBool("isFalling", false);
+                anim.SetBool("meditation", false);
                 Invoke("SetAttackBoolBack", .35f);
 
                 //hit detection
@@ -188,7 +213,7 @@ public class PlayerController : MonoBehaviour
                 anim.SetBool("isJumping", false);
                 anim.SetBool("isFalling", false);
                 Invoke("SetAttackBoolBack", .35f);
-                
+
                 //damage && hit detection
                 foreach (Collider2D enemy in hitEnemies)
                 {
@@ -212,6 +237,7 @@ public class PlayerController : MonoBehaviour
                     anim.SetBool("isCrouching", false);
                     anim.SetBool("isJumping", false);
                     anim.SetBool("isFalling", false);
+                    anim.SetBool("meditation", false);
                     Invoke("SetAttackBoolBack", .35f);
 
 
@@ -256,6 +282,7 @@ public class PlayerController : MonoBehaviour
             anim.SetBool("isCrouching", false);
             anim.SetBool("isJumping", false);
             anim.SetBool("isFalling", false);
+            anim.SetBool("meditation", false);
             if (enemy.transform.position.x > transform.position.x)
             {
                 //enemy is to player's right, if damaged to player ocurrs player is pushed left
@@ -267,6 +294,27 @@ public class PlayerController : MonoBehaviour
                 rb.velocity = new Vector2(hurtForce, rb.velocity.y);
             }
         }
+        if (other.gameObject.tag == "Weapons")
+        {
+            itemName = other.gameObject.name;//assign value of item to player
+            if (itemName == "lighteningTome")
+            {
+                Destroy(other.gameObject);
+                spellController.lspell = true;
+
+            }
+            if (itemName == "fireTome")
+            {
+                Destroy(other.gameObject);
+                spellController.fspell = true;
+            }
+            else
+            {
+                Destroy(other.gameObject);
+                // destroy gameobject
+            }
+        }
+
 
     }
     private void SetHurtBoolBack()
@@ -282,6 +330,8 @@ public class PlayerController : MonoBehaviour
         anim.SetBool("isCrouching", false);
         anim.SetBool("isJumping", false);
         anim.SetBool("isFalling", false);
+        anim.SetBool("meditation", false);
+        Invoke("SetHurtBoolBack", .75f);
         //print("I SHOULD BE TAKING DAMAGE");
         if (currentHp <= 0)
         {
@@ -289,14 +339,65 @@ public class PlayerController : MonoBehaviour
         }
         /*//Invoke("SetHurtBoolBack", .75f);*/
     }
-   /* public void FasterHitBoxDetection()
-    {
-        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(attackPoint.position, 1f, enemyLayers);
-    }*/
+    /* public void FasterHitBoxDetection()
+     {
+         Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(attackPoint.position, 1f, enemyLayers);
+     }*/
 
 
     void CreateDust()
     {
         dust.Play();
     }
+    void Meditation()
+    {
+        anim.SetBool("meditation", true);
+        anim.SetBool("isCrouching", false);
+        anim.SetBool("isJumping", false);
+        anim.SetBool("isFalling", false);
+    }
+    IEnumerator RebuildMp()
+    {
+        //print("DO WE GET HERE");
+            if (currentMp < maxMp)
+            {
+          //  print("#2????");
+            GetComponent<Combo>().currentMp += 1;
+                yield return new WaitForSeconds(1.5f);
+            }
+            else
+            {
+            //print("#3?????");
+            yield return null;
+            }
+        }
+
+    void Running()
+    {
+        moveInput = Input.GetAxisRaw("Horizontal");
+        if (Input.GetButton("Mouse ScrollWheel") && Mathf.Abs(moveInput) > .1) {
+
+            CreateDust();
+            anim.SetBool("run", true);
+            
+
+            rb.velocity = new Vector2(moveInput * runSpeed, rb.velocity.y);
+
+            if (facingRight == false && moveInput > 0)
+            {
+                Flip();
+                CreateDust();
+            }
+            else if (facingRight == true && moveInput < 0)
+            {
+                Flip();
+                CreateDust();
+            }
+        }
+        if (!Input.GetButton("Mouse ScrollWheel"))
+        {
+            anim.SetBool("run", false);
+        }
+    }
+    
 }
